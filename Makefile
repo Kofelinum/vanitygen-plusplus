@@ -53,8 +53,13 @@ oclvanityminer: oclvanityminer.o oclengine.o pattern.o util.o sha3.o
 keyconv: keyconv.o util.o sha3.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
 
-test:
-	@echo "No tests available"
+TESTS=tests/test_trx
+
+$(TESTS): tests/test_trx.c util.o sha3.o
+	$(CC) tests/test_trx.c util.o sha3.o -I. $(CFLAGS) -lcrypto -lm -lpthread -o $@
+
+test: $(TESTS)
+	./$<
 
 clean:
 	rm -f $(OBJS) $(PROGS) $(TESTS) *.oclbin
