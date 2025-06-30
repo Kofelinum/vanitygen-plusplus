@@ -29,7 +29,7 @@
 #include <openssl/evp.h>
 
 #if defined(_WIN32)
-#include "winglue.h"
+#define INLINE __inline
 #endif
 
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS

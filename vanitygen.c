@@ -31,8 +31,6 @@
 
 #include "pattern.h"
 #include "util.h"
-#include "ed25519.h"
-#include "simplevanitygen.h"
 #include "sha3.h"
 
 #include "ticker.h"
@@ -457,8 +455,7 @@ main(int argc, char **argv)
 					"Argument(UPPERCASE) : Coin : Address Prefix\n"
 					"---------------\n"
 					"ETH : Ethereum : 0x\n"
-					"XLM : Stellar Lumens : G\n"
-					"ATOM : Cosmos : cosmos1\n"
+                                        
 					);
 				vg_print_alicoin_help_msg();
 				return 1;
@@ -470,20 +467,6 @@ main(int argc, char **argv)
 				addrtype = ADDR_TYPE_ETH;
 				privtype = PRIV_TYPE_ETH;
 				break;
-			}
-			else
-			if (strcmp(optarg, "XLM")== 0) {
-				fprintf(stderr,
-						"Generating XLM Address\n");
-				addrtype = ADDR_TYPE_XLM;
-				privtype = PRIV_TYPE_XLM;
-			}
-			else
-			if (strcmp(optarg, "ATOM")== 0) {
-				fprintf(stderr,
-						"Generating ATOM Address\n");
-				addrtype = ADDR_TYPE_ATOM;
-				privtype = PRIV_TYPE_ATOM;
 			}
 			else {
 				// Read from base58prefix.txt
@@ -638,215 +621,13 @@ main(int argc, char **argv)
 	}
 #endif
 
-	if (addrtype == ADDR_TYPE_XLM) {
-#if OPENSSL_VERSION_NUMBER < 0x10101000L
-        fprintf(stderr, "OpenSSL 1.1.1 (or higher) is required for XLM\n");
-#else
-	    if (optind >= argc) {
-			usage(argv[0]);
-			return 1;
-		}
-		patterns = &argv[optind];
-		printf("XLM patterns %s\n", *patterns);
+/* TRON only: remove XLM support */
 
-        vg_context_ed25519_t *vc_ed25519 = NULL;
-        vc_ed25519 = (vg_context_ed25519_t *) malloc(sizeof(*vc_ed25519));
-		vc_ed25519->vc_verbose = verbose;
-		vc_ed25519->vc_addrtype = addrtype;
-		vc_ed25519->vc_privtype = privtype;
-		vc_ed25519->vc_result_file = result_file;
-		vc_ed25519->vc_numpairs = numpairs;
-		if (vc_ed25519->vc_numpairs == 0) {
-            vc_ed25519->vc_numpairs = 1;
-		}
-		vc_ed25519->pattern = *patterns;
-        vc_ed25519->match_location = 1; // match begin location
-
-        size_t pattern_len = strlen(vc_ed25519->pattern);
-
-        if (vc_ed25519->vc_addrtype == ADDR_TYPE_XLM) {
-            if (pattern_len > 56) { // The max length of XLM address is 56
-                fprintf(stderr, "The pattern is too long for XLM address\n");
-                return 1;
-            }
+/* TRON only: remove ATOM and other address formats */
+        if (0) {
         }
-        if (regex) {
-            fprintf(stderr, "WARNING: only ^ and $ is supported in regular expressions currently\n");
-            if (vc_ed25519->pattern[0] == '^') {
-                vc_ed25519->match_location = 1; // match begin location
-                // skip first char '^'
-				vc_ed25519->pattern = vc_ed25519->pattern + 1;
-            } else if (vc_ed25519->pattern[pattern_len-1] == '$') {
-                vc_ed25519->match_location = 2; // match end location
-                // remove last char '$'
-				vc_ed25519->pattern[pattern_len-1] = '\0';
-            } else {
-                vc_ed25519->match_location = 0; // match any location
-            }
+        else if (0) {
         }
-
-        if (vc_ed25519->match_location == 1 && vc_ed25519->pattern[0] != 'G') {
-            fprintf(stderr, "Prefix '%s' not possible\n", vc_ed25519->pattern);
-            fprintf(stderr, "Hint: Run vanitygen++ with \"-C LIST\" for a list of valid prefixes.  Also note that many coins only allow certain characters as the second character in the prefix.\n");
-            return 1;
-        }
-
-		if (nthreads <= 0) {
-			/* Determine the number of threads */
-			nthreads = count_processors();
-			if (nthreads <= 0) {
-				fprintf(stderr, "ERROR: could not determine processor count\n");
-				nthreads = 1;
-			}
-
-			if (nthreads > ed25519_max_threads) {
-				fprintf(stderr, "WARNING: too many threads\n");
-				nthreads = ed25519_max_threads;
-			}
-		}
-		vc_ed25519->vc_thread_num = nthreads;
-		vc_ed25519->vc_start_time = (unsigned long)time(NULL);
-
-		if (!start_threads_ed25519(vc_ed25519))
-			return 1;
-#endif
-		return 0;
-	}
-
-	if (addrtype == ADDR_TYPE_ATOM) {
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
-		fprintf(stderr, "OpenSSL 3.0 (or higher) is required for Cosmos address\n");
-		return 1;
-#else
-		if (optind >= argc) {
-			usage(argv[0]);
-			return 1;
-		}
-		patterns = &argv[optind];
-		printf("Pattern: %s\n", *patterns);
-
-		vg_context_simplevanitygen_t *vc_simplevanitygen = NULL;
-		vc_simplevanitygen = (vg_context_simplevanitygen_t *) malloc(sizeof(*vc_simplevanitygen));
-		vc_simplevanitygen->vc_format = format;
-		vc_simplevanitygen->vc_verbose = verbose;
-		vc_simplevanitygen->vc_addrtype = addrtype;
-		vc_simplevanitygen->vc_privtype = privtype;
-		vc_simplevanitygen->vc_coin = coin;
-		vc_simplevanitygen->vc_hrp = NULL;
-		vc_simplevanitygen->vc_result_file = result_file;
-		vc_simplevanitygen->vc_numpairs = numpairs;
-		if (vc_simplevanitygen->vc_numpairs == 0) {
-			vc_simplevanitygen->vc_numpairs = 1;
-		}
-		vc_simplevanitygen->pattern = *patterns;
-		vc_simplevanitygen->match_location = 1; // By default, match begin location
-
-		size_t pattern_len = strlen(vc_simplevanitygen->pattern);
-
-		if (regex) {
-			fprintf(stderr, "WARNING: only ^ and $ is supported in regular expressions currently\n");
-			if (vc_simplevanitygen->pattern[0] == '^') {
-				vc_simplevanitygen->match_location = 1; // match begin location
-				// skip first char '^'
-				vc_simplevanitygen->pattern = vc_simplevanitygen->pattern + 1;
-			} else if (vc_simplevanitygen->pattern[pattern_len-1] == '$') {
-				vc_simplevanitygen->match_location = 2; // match end location
-				// remove last char '$'
-				vc_simplevanitygen->pattern[pattern_len-1] = '\0';
-			} else {
-				vc_simplevanitygen->match_location = 0; // match any location
-			}
-		}
-
-		if (nthreads <= 0) {
-			/* Determine the number of threads */
-			nthreads = count_processors();
-			if (nthreads <= 0) {
-				fprintf(stderr, "ERROR: could not determine processor count\n");
-				nthreads = 1;
-			}
-
-			if (nthreads > simplevanitygen_max_threads) {
-				fprintf(stderr, "WARNING: too many threads\n");
-				nthreads = simplevanitygen_max_threads;
-			}
-		}
-		vc_simplevanitygen->vc_thread_num = nthreads;
-		vc_simplevanitygen->vc_start_time = (unsigned long)time(NULL);
-
-		if (!start_threads_simplevanitygen(vc_simplevanitygen))
-			return 1;
-
-		return 0;
-#endif
-	}
-	else if (format == VCF_P2WPKH || format == VCF_P2TR) {
-#if OPENSSL_VERSION_NUMBER < 0x30000000L
-		fprintf(stderr, "OpenSSL 3.0 (or higher) is required for P2WPKH or P2TR address\n");
-		return 1;
-#else
-		if (optind >= argc) {
-			usage(argv[0]);
-			return 1;
-		}
-		patterns = &argv[optind];
-		printf("Pattern: %s\n", *patterns);
-
-		vg_context_simplevanitygen_t *vc_simplevanitygen = NULL;
-		vc_simplevanitygen = (vg_context_simplevanitygen_t *) malloc(sizeof(*vc_simplevanitygen));
-		vc_simplevanitygen->vc_format = format;
-		vc_simplevanitygen->vc_verbose = verbose;
-		vc_simplevanitygen->vc_addrtype = addrtype;
-		vc_simplevanitygen->vc_privtype = privtype;
-		vc_simplevanitygen->vc_coin = coin;
-		vc_simplevanitygen->vc_hrp = bech32_hrp;
-		vc_simplevanitygen->vc_result_file = result_file;
-		vc_simplevanitygen->vc_numpairs = numpairs;
-		if (vc_simplevanitygen->vc_numpairs == 0) {
-			vc_simplevanitygen->vc_numpairs = 1;
-		}
-		vc_simplevanitygen->pattern = *patterns;
-		vc_simplevanitygen->match_location = 1; // By default, match begin location
-
-		size_t pattern_len = strlen(vc_simplevanitygen->pattern);
-
-		if (regex) {
-			fprintf(stderr, "WARNING: only ^ and $ is supported in regular expressions currently\n");
-			if (vc_simplevanitygen->pattern[0] == '^') {
-				vc_simplevanitygen->match_location = 1; // match begin location
-				// skip first char '^'
-				vc_simplevanitygen->pattern = vc_simplevanitygen->pattern + 1;
-			} else if (vc_simplevanitygen->pattern[pattern_len-1] == '$') {
-				vc_simplevanitygen->match_location = 2; // match end location
-				// remove last char '$'
-				vc_simplevanitygen->pattern[pattern_len-1] = '\0';
-			} else {
-				vc_simplevanitygen->match_location = 0; // match any location
-			}
-		}
-
-		if (nthreads <= 0) {
-			/* Determine the number of threads */
-			nthreads = count_processors();
-			if (nthreads <= 0) {
-				fprintf(stderr, "ERROR: could not determine processor count\n");
-				nthreads = 1;
-			}
-
-			if (nthreads > simplevanitygen_max_threads) {
-				fprintf(stderr, "WARNING: too many threads\n");
-				nthreads = simplevanitygen_max_threads;
-			}
-		}
-		vc_simplevanitygen->vc_thread_num = nthreads;
-		vc_simplevanitygen->vc_start_time = (unsigned long)time(NULL);
-
-		if (!start_threads_simplevanitygen(vc_simplevanitygen))
-			return 1;
-
-		return 0;
-#endif
-	}
 
 	/* Option -Z can be used with or without option -l
 	   but, option -l must use together with option -Z */

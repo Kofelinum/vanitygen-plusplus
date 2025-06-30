@@ -12,7 +12,7 @@
 #if !defined(_WIN32)
 #include <unistd.h>
 #else
-#include "winglue.h"
+#define INLINE __inline
 #endif
 
 #include "pattern.h"
