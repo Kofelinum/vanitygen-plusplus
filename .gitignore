@@ -1,10 +1,15 @@
-*.oclbin
+# Build artifacts
 *.o
+*.oclbin
+
+# Binary executables
 vanitygen
+vanitygen++
 oclvanitygen
+oclvanitygen++
 oclvanityminer
 keyconv
+
+# Test files
 results.txt
-oclvanitygen++
-vanitygen++
 run_tests
