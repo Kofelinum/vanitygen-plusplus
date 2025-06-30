@@ -14,3 +14,8 @@ Run `make` to build the command line tools. If you have an OpenCL capable GPU yo
 ```bash
 $ make oclvanitygen++ oclvanityminer
 ```
+
+### Dependencies
+Install the OpenSSL and PCRE development packages for your system before
+building. The optional OpenCL headers and libraries are only required for
+the GPU versions (`oclvanitygen++` and `oclvanityminer`).
