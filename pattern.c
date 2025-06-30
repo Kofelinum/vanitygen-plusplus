@@ -1826,6 +1826,7 @@ typedef struct _vg_regex_context_s {
 	pcre_extra		**vcr_regex_extra;
 	const char		**vcr_regex_pat;
 	unsigned long		vcr_nalloc;
+	int	vcr_caseinsensitive;
 } vg_regex_context_t;
 
 static int
@@ -1868,10 +1869,11 @@ vg_regex_context_add_patterns(vg_context_t *vcp,
 	}
 
 	nres = vcrp->base.vc_npatterns;
-	for (i = 0; i < npatterns; i++) {
-		vcrp->vcr_regex[nres] =
-			pcre_compile(patterns[i], 0,
-				     &pcre_errptr, &pcre_erroffset, NULL);
+        for (i = 0; i < npatterns; i++) {
+                int options = vcrp->vcr_caseinsensitive ? PCRE_CASELESS : 0;
+                vcrp->vcr_regex[nres] =
+                        pcre_compile(patterns[i], options,
+                                     &pcre_errptr, &pcre_erroffset, NULL);
 		if (!vcrp->vcr_regex[nres]) {
 			const char *spaces = "                ";
 			fprintf(stderr, "%s\n", patterns[i]);
@@ -2060,9 +2062,9 @@ out:
 }
 
 vg_context_t *
-vg_regex_context_new(int addrtype, int privtype)
+vg_regex_context_new(int addrtype, int privtype, int caseinsensitive)
 {
-	vg_regex_context_t *vcrp;
+        vg_regex_context_t *vcrp;
 
 	vcrp = (vg_regex_context_t *) malloc(sizeof(*vcrp));
 	if (vcrp) {
@@ -2079,8 +2081,9 @@ vg_regex_context_new(int addrtype, int privtype)
 			vg_regex_context_clear_all_patterns;
 		vcrp->base.vc_test = vg_regex_test;
 		vcrp->base.vc_addr_sort = NULL;
-		vcrp->vcr_regex = NULL;
-		vcrp->vcr_nalloc = 0;
-	}
-	return &vcrp->base;
+                vcrp->vcr_regex = NULL;
+                vcrp->vcr_nalloc = 0;
+                vcrp->vcr_caseinsensitive = caseinsensitive;
+        }
+        return &vcrp->base;
 }

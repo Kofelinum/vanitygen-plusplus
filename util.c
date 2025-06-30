@@ -1516,3 +1516,63 @@ void copy_nbits(unsigned char *dst, unsigned char *src, int nbits) {
 	dst[nbytes - 1] = (backup & tab[extra_nbits])  // 000NNNNN
 					| (after & ~tab[extra_nbits]); // JJJ00000
 }
+
+static int is_regex_meta(char c) {
+        switch (c) {
+        case '.': case '^': case '$': case '*': case '+': case '?':
+        case '(': case ')': case '[': case ']': case '{': case '}':
+        case '|': case '\\':
+                return 1;
+        default:
+                return 0;
+        }
+}
+
+static char *escape_regex(const char *pat) {
+        size_t extra = 0;
+        for (const char *p = pat; *p; p++) {
+                if (is_regex_meta(*p))
+                        extra++;
+        }
+        size_t len = strlen(pat);
+        char *out = (char *)malloc(len + extra + 1);
+        char *o = out;
+        for (const char *p = pat; *p; p++) {
+                if (is_regex_meta(*p))
+                        *o++ = '\\';
+                *o++ = *p;
+        }
+        *o = '\0';
+        return out;
+}
+
+char *vg_build_regex_pattern(const char *pattern, int mode, int caseinsensitive)
+{
+        char *escaped = escape_regex(pattern);
+        const char *prefix = caseinsensitive ? "(?i)" : "";
+        size_t len = strlen(prefix) + strlen(escaped) + 1;
+        if (mode == VG_MATCH_SUFFIX)
+                len += 2; /* for .* and $ */
+        else if (mode == VG_MATCH_INSIDE)
+                len += 4; /* .* before and after */
+
+        char *res = (char *)malloc(len);
+        char *ptr = res;
+        if (*prefix) {
+                memcpy(ptr, prefix, strlen(prefix));
+                ptr += strlen(prefix);
+        }
+        if (mode == VG_MATCH_SUFFIX || mode == VG_MATCH_INSIDE) {
+                *ptr++ = '.'; *ptr++ = '*';
+        }
+        memcpy(ptr, escaped, strlen(escaped));
+        ptr += strlen(escaped);
+        if (mode == VG_MATCH_INSIDE) {
+                *ptr++ = '.'; *ptr++ = '*';
+        } else if (mode == VG_MATCH_SUFFIX) {
+                *ptr++ = '$';
+        }
+        *ptr = '\0';
+        free(escaped);
+        return res;
+}
