@@ -25,7 +25,7 @@
 #include <pthread.h>
 
 #ifdef _WIN32
-#include "winglue.h"
+#define INLINE __inline
 #else
 #define INLINE inline
 #define PRSIZET "z"
@@ -40,11 +40,6 @@
 #define ADDR_TYPE_ETH -1
 #define PRIV_TYPE_ETH -1
 
-#define ADDR_TYPE_XLM -2
-#define PRIV_TYPE_XLM -2
-
-#define ADDR_TYPE_ATOM -3
-#define PRIV_TYPE_ATOM -3
 
 typedef struct _vg_context_s vg_context_t;
 

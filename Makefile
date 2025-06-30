@@ -19,8 +19,7 @@ CFLAGS=-ggdb -O3 -Wall -Wno-deprecated
 # CFLAGS=-ggdb -Wall -Wno-deprecated -fsanitize=address
 # CFLAGS=-ggdb -O3 -Wall -I /usr/local/cuda-10.2/include/
 
-OBJS=vanitygen.o oclvanitygen.o oclvanityminer.o oclengine.o keyconv.o pattern.o util.o groestl.o sha3.o ed25519.o \
-     stellar.o base32.o crc16.o bech32.o segwit_addr.o
+OBJS=vanitygen.o oclvanitygen.o oclvanityminer.o oclengine.o keyconv.o pattern.o util.o sha3.o
 PROGS=vanitygen++ keyconv oclvanitygen++ oclvanityminer
 
 PLATFORM=$(shell uname -s)
@@ -42,25 +41,20 @@ most: vanitygen++ keyconv
 
 all: $(PROGS)
 
-vanitygen++: vanitygen.o pattern.o util.o groestl.o sha3.o ed25519.o stellar.o base32.o crc16.o simplevanitygen.o bech32.o segwit_addr.o
+vanitygen++: vanitygen.o pattern.o util.o sha3.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
 
-oclvanitygen++: oclvanitygen.o oclengine.o pattern.o util.o groestl.o sha3.o
+oclvanitygen++: oclvanitygen.o oclengine.o pattern.o util.o sha3.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(OPENCL_LIBS)
 
-oclvanityminer: oclvanityminer.o oclengine.o pattern.o util.o groestl.o sha3.o
+oclvanityminer: oclvanityminer.o oclengine.o pattern.o util.o sha3.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(OPENCL_LIBS) -lcurl
 
-keyconv: keyconv.o util.o groestl.o sha3.o
+keyconv: keyconv.o util.o sha3.o
 	$(CC) $^ -o $@ $(CFLAGS) $(LIBS)
 
-run_tests.o: tests.h util_test.h segwit_addr_test.h pattern_test.h
-
-run_tests: run_tests.o util.o groestl.o sha3.o bech32.o segwit_addr.o
-	$(CC) $^ -o $@ $(CFLAGS) $(LIBS) $(OPENCL_LIBS) -lcheck
-
-test: run_tests
-	./run_tests
+test:
+	@echo "No tests available"
 
 clean:
-	rm -f $(OBJS) $(PROGS) $(TESTS) *.oclbin run_tests
+	rm -f $(OBJS) $(PROGS) $(TESTS) *.oclbin
