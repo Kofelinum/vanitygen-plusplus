@@ -61,7 +61,9 @@ usage(const char *name)
 "-q            Quiet output\n"
 "-r            Use regular expression match instead of prefix\n"
 "              (Feasibility of expression is not checked)\n"
-"-i            Case-insensitive prefix search\n"
+"-B            Match pattern anywhere in address\n"
+"-A            Match pattern at address end\n"
+"-i            Case-insensitive search\n"
 "-k            Keep pattern and continue search after finding a match\n"
 "-1            Stop after first match\n"
 "-a <amount>   Stop after generating <amount> addresses/keys\n"
@@ -103,8 +105,9 @@ main(int argc, char **argv)
 {
 	int addrtype = 0;
 	int privtype = 128;
-	int regex = 0;
-	int caseinsensitive = 0;
+        int regex = 0;
+        int match_mode = VG_MATCH_PREFIX;
+        int caseinsensitive = 0;
 	int opt;
 	char pwbuf[128];
 	int platformidx = -1, deviceidx = -1;
@@ -144,15 +147,23 @@ main(int argc, char **argv)
 
 	int i;
 
-	while ((opt = getopt(argc, argv,
-			     "vqrik1zC:X:Y:F:eE:p:P:d:w:t:g:b:VSh?f:o:s:D:Z:a:l:")) != -1) {
+        while ((opt = getopt(argc, argv,
+                             "vqrik1zC:X:Y:F:eE:p:P:d:w:t:g:b:VSh?f:o:s:D:Z:a:l:BA")) != -1) {
 		switch (opt) {
-		case 'r':
-			regex = 1;
-			break;
-		case 'v':
-			verbose = 2;
-			break;
+                case 'r':
+                        regex = 1;
+                        break;
+                case 'B':
+                        regex = 1;
+                        match_mode = VG_MATCH_INSIDE;
+                        break;
+                case 'A':
+                        regex = 1;
+                        match_mode = VG_MATCH_SUFFIX;
+                        break;
+                case 'v':
+                        verbose = 2;
+                        break;
 		case 'q':
 			verbose = 0;
 			break;
@@ -416,10 +427,6 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (caseinsensitive && regex)
-		fprintf(stderr,
-			"WARNING: case insensitive mode incompatible with "
-			"regular expressions\n");
 
 	if (seedfile) {
 		opt = -1;
@@ -441,8 +448,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (regex) {
-		vcp = vg_regex_context_new(addrtype, privtype);
+        if (regex) {
+                vcp = vg_regex_context_new(addrtype, privtype, caseinsensitive);
 
 	} else {
 		vcp = vg_prefix_context_new(addrtype, privtype,
@@ -470,13 +477,18 @@ main(int argc, char **argv)
 			usage(argv[0]);
 			return 1;
 		}
-		patterns = &argv[optind];
-		npatterns = argc - optind;
+                patterns = &argv[optind];
+                npatterns = argc - optind;
 
-		if (!vg_context_add_patterns(vcp,
-					     (const char ** const) patterns,
-					     npatterns))
-		return 1;
+                if (regex && match_mode != VG_MATCH_PREFIX) {
+                        for (i = 0; i < npatterns; i++)
+                                patterns[i] = vg_build_regex_pattern(patterns[i], match_mode, caseinsensitive);
+                }
+
+                if (!vg_context_add_patterns(vcp,
+                                             (const char ** const) patterns,
+                                             npatterns))
+                return 1;
 	}
 
 	for (i = 0; i < npattfp; i++) {
@@ -485,16 +497,20 @@ main(int argc, char **argv)
 			fprintf(stderr, "Failed to load pattern file\n");
 			return 1;
 		}
-		if (fp != stdin)
-			fclose(fp);
+                if (fp != stdin)
+                        fclose(fp);
 
-		if (!regex)
-			vg_prefix_context_set_case_insensitive(vcp, pattfpi[i]);
+                if (!regex)
+                        vg_prefix_context_set_case_insensitive(vcp, pattfpi[i]);
+                else if (match_mode != VG_MATCH_PREFIX) {
+                        for (int j = 0; j < npatterns; j++)
+                                patterns[j] = vg_build_regex_pattern(patterns[j], match_mode, caseinsensitive);
+                }
 
-		if (!vg_context_add_patterns(vcp,
-					     (const char ** const) patterns,
-					     npatterns))
-		return 1;
+                if (!vg_context_add_patterns(vcp,
+                                             (const char ** const) patterns,
+                                             npatterns))
+                return 1;
 	}
 
 	if (!vcp->vc_npatterns) {

@@ -94,4 +94,10 @@ extern void eth_pubkey2addr(const unsigned char* pubkey_buf, int addrformat, uns
 extern void eth_encode_checksum_addr(void *input, int inlen, char *output, int outlen);
 
 extern void copy_nbits(unsigned char *dst, unsigned char *src, int nbits);
+
+#define VG_MATCH_PREFIX 0
+#define VG_MATCH_SUFFIX 1
+#define VG_MATCH_INSIDE 2
+
+char *vg_build_regex_pattern(const char *pattern, int mode, int caseinsensitive);
 #endif /* !defined (__VG_UTIL_H__) */
