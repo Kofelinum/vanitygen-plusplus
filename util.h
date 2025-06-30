@@ -25,7 +25,6 @@
 #include <openssl/bn.h>
 #include <openssl/ec.h>
 
-extern int GRSFlag;
 extern int TRXFlag;
 
 extern const char *vg_b58_alphabet;

@@ -36,7 +36,6 @@
 #include "ticker.h"
 char ticker[10];
 
-int GRSFlag = 0;
 int TRXFlag = 0;
 
 const char *version = VANITYGEN_VERSION;
@@ -474,11 +473,9 @@ main(int argc, char **argv)
 				if (vg_get_altcoin(optarg, &addrtype, &privtype, &bech32_hrp)) {
 					return 1;
 				}
-                if (strcmp(optarg, "GRS")== 0) {
-                    GRSFlag = 1;
-                } else if (strcmp(optarg, "TRX") == 0) {
-					TRXFlag = 1;
-				}
+                if (strcmp(optarg, "TRX") == 0) {
+                    TRXFlag = 1;
+                }
 			}
 			break;
 
